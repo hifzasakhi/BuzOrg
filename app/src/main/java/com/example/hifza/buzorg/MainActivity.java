@@ -1,115 +1,128 @@
 package com.example.hifza.buzorg;
 
-import android.app.ProgressDialog;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.ListView;
+import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.*;
-
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity {
 
-    //defining view objects
-    private EditText editTextEmail;
-    private EditText editTextPassword;
-    private Button buttonSignup;
-    private ProgressDialog progressDialog;
+    private Button  add_room;
+    private EditText room_name;
 
-
-    //defining firebaseauth object
-    private FirebaseAuth firebaseAuth;
+    private ListView listView;
+    private ArrayAdapter<String> arrayAdapter;
+    private ArrayList<String> list_of_rooms = new ArrayList<>();
+    private String name;
+    private DatabaseReference root = FirebaseDatabase.getInstance().getReference().getRoot();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //initializing firebase auth object
-        firebaseAuth = FirebaseAuth.getInstance();
+        add_room = (Button) findViewById(R.id.add_room);
+        room_name = (EditText) findViewById(R.id.room_name_edittext);
+        listView = (ListView) findViewById(R.id.listView);
 
-        //initializing views
-        editTextEmail = (EditText) findViewById(R.id.email);
-        editTextPassword = (EditText) findViewById(R.id.password);
+        arrayAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,list_of_rooms);
 
-        buttonSignup = (Button) findViewById(R.id.buttonSignup);
+        listView.setAdapter(arrayAdapter);
 
-        progressDialog = new ProgressDialog(this);
+        request_user_name();
 
-        //attaching listener to button
-        buttonSignup.setOnClickListener(this);
-    }
-
-    private void registerUser(){
-
-        //getting email and password from edit texts
-        String email = editTextEmail.getText().toString().trim();
-        String password  = editTextPassword.getText().toString().trim();
-
-        //checking if email and passwords are empty
-        if(TextUtils.isEmpty(email)){
-            Toast.makeText(this,"Please enter email",Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if(TextUtils.isEmpty(password)){
-            Toast.makeText(this,"Please enter password",Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        //if the email and password are not empty
-        //displaying a progress dialog
-
-        progressDialog.setMessage("Registering Please Wait...");
-        progressDialog.show();
-        progressDialog.
-
-        //creating a new user
-        firebaseAuth.createUserWithEmailAndPassword(email, password);
-
-        .addOnFailureListener(this, new OnFailureListener() {
+        add_room.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(MainActivity.this,"Could not register",Toast.LENGTH_LONG).show();
+            public void onClick(View view) {
+
+                Map<String,Object> map = new HashMap<String, Object>();
+                map.put(room_name.getText().toString(),"");
+                root.updateChildren(map);
+
             }
         });
 
-        firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        //checking if success
-                        if(task.isSuccessful()){
-                            //display some message here
-                            Toast.makeText(MainActivity.this,"Successfully registered",Toast.LENGTH_LONG).show();
-                        }else{
-                            //display some message here
-                            Toast.makeText(MainActivity.this,"Registration Error",Toast.LENGTH_LONG).show();
-                        }
-                        progressDialog.dismiss();
-                    }
-                });
+        root.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                Set<String> set = new HashSet<String>();
+                Iterator i = dataSnapshot.getChildren().iterator();
+
+                while (i.hasNext()){
+                    set.add(((DataSnapshot)i.next()).getKey());
+                }
+
+                list_of_rooms.clear();
+                list_of_rooms.addAll(set);
+
+                arrayAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                Intent intent = new Intent(getApplicationContext(),Chat_room.class);
+                intent.putExtra("room_name",((TextView)view).getText().toString() );
+                intent.putExtra("user_name",name);
+                startActivity(intent);
+            }
+        });
 
     }
 
-    @Override
-    public void onClick(View view) {
-        //calling register method on click
-        registerUser();
+    private void request_user_name() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter name:");
+
+        final EditText input_field = new EditText(this);
+
+        builder.setView(input_field);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                name = input_field.getText().toString();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+                request_user_name();
+            }
+        });
+
+        builder.show();
     }
+
+
 }
