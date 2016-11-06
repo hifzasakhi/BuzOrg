@@ -21,7 +21,7 @@ import java.util.Map;
 public class Chat_room extends AppCompatActivity{
 
     private Button send;
-    private EditText input_msg;
+    private EditText type_msg;
     private TextView chat_conversation;
 
     private String user_name,room_name;
@@ -34,7 +34,7 @@ public class Chat_room extends AppCompatActivity{
         setContentView(R.layout.chat_room);
 
         send = (Button) findViewById(R.id.send);
-        input_msg = (EditText) findViewById(R.id.msg_input);
+        type_msg = (EditText) findViewById(R.id.msg_input);
         chat_conversation = (TextView) findViewById(R.id.textView);
 
         user_name = getIntent().getExtras().get("user_name").toString();
@@ -54,7 +54,7 @@ public class Chat_room extends AppCompatActivity{
                 DatabaseReference message_root = root.child(temp_key);
                 Map<String,Object> map2 = new HashMap<String, Object>();
                 map2.put("name",user_name);
-                map2.put("msg",input_msg.getText().toString());
+                map2.put("msg",type_msg.getText().toString());
 
                 message_root.updateChildren(map2);
             }
@@ -92,7 +92,7 @@ public class Chat_room extends AppCompatActivity{
 
     }
 
-    private String chat_msg,chat_user_name;
+    private String msg,user;
 
     private void append_chat_conversation(DataSnapshot dataSnapshot) {
 
@@ -100,10 +100,10 @@ public class Chat_room extends AppCompatActivity{
 
         while (i.hasNext()){
 
-            chat_msg = (String) ((DataSnapshot)i.next()).getValue();
-            chat_user_name = (String) ((DataSnapshot)i.next()).getValue();
+            msg = (String) ((DataSnapshot)i.next()).getValue();
+            user = (String) ((DataSnapshot)i.next()).getValue();
 
-            chat_conversation.append(chat_user_name +" : "+chat_msg +" \n");
+            chat_conversation.append(user +" : "+ msg +" \n");
         }
     }
 }

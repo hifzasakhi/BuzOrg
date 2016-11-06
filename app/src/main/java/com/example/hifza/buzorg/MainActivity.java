@@ -28,12 +28,12 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button  add_room;
+    private Button add_room;
     private EditText room_name;
 
     private ListView listView;
     private ArrayAdapter<String> arrayAdapter;
-    private ArrayList<String> list_of_rooms = new ArrayList<>();
+    private ArrayList<String> room_list = new ArrayList<>();
     private String name;
     private DatabaseReference root = FirebaseDatabase.getInstance().getReference().getRoot();
 
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         room_name = (EditText) findViewById(R.id.room_name_edittext);
         listView = (ListView) findViewById(R.id.listView);
 
-        arrayAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,list_of_rooms);
+        arrayAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,room_list);
 
         listView.setAdapter(arrayAdapter);
 
@@ -74,8 +74,8 @@ public class MainActivity extends AppCompatActivity {
                     set.add(((DataSnapshot)i.next()).getKey());
                 }
 
-                list_of_rooms.clear();
-                list_of_rooms.addAll(set);
+                room_list.clear();
+                room_list.addAll(set);
 
                 arrayAdapter.notifyDataSetChanged();
             }
